@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, Depends, Response, APIRouter, HTTPException
+from fastapi import FastAPI, Depends, Response, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -31,49 +31,40 @@ app.add_middleware(
 
 # https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
 
-@router_v1.get('/students')
-async def get_students(db: Session = Depends(get_db)):
-    return db.query(models.Student).all()
+@router_v1.get('/books')
+async def get_books(db: Session = Depends(get_db)):
+    return db.query(models.Book).all()
 
-@router_v1.get('/students/{student_id}')
-async def get_student(student_id: int, db: Session = Depends(get_db)):
-    return db.query(models.Student).filter(models.Student.id == student_id).first()
+@router_v1.get('/books/{book_id}')
+async def get_book(book_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Book).filter(models.Book.id == book_id).first()
 
-@router_v1.post('/students')
-async def create_student(student: dict, response: Response, db: Session = Depends(get_db)):
+@router_v1.post('/books')
+async def create_book(book: dict, response: Response, db: Session = Depends(get_db)):
     # TODO: Add validation
-    newstudent = models.Student(firstname=student['firstname'], lastname=student['lastname'], stu_id=student['stu_id'], dob=student['dob'], sex=student['sex'], age=student['age'])
-    db.add(newstudent)
+    newbook = models.Book(title=book['title'], author=book['author'], year=book['year'], is_published=book['is_published'])
+    db.add(newbook)
     db.commit()
-    db.refresh(newstudent)
+    db.refresh(newbook)
     response.status_code = 201
-    return newstudent
+    return newbook
 
-@router_v1.patch('/students/{student_id}')
-async def update_student(student_id: int, student: dict, db: Session = Depends(get_db)):
-    stu_info = db.query(models.Student).filter(models.Student.id == student_id).first()
-    if stu_info == None:
-        raise HTTPException(404, "Student Not found")
-    stu_info.firstname = student.get("firstname", None)
-    stu_info.lastname = student.get("lastname", None)
-    stu_info.stu_id = student.get("stu_id", None)
-    stu_info.dob = student.get("dob", None)
-    stu_info.sex = student.get("sex", None)
-    stu_info.age = student.get("age", None)
-    db.commit()
-    db.refresh(stu_info)
-    return stu_info
-
-@router_v1.delete('/students/{student_id}')
-async def delete_student(student_id: int, db: Session = Depends(get_db)):
-    stu_info = db.query(models.Student).filter(models.Student.id == student_id).first()
-    if stu_info == None:
-        raise HTTPException(404, "Student Not found")
-    db.delete(stu_info)
-    db.commit()
+@router_v1.patch('/books/{book_id}')
+async def update_book(book_id: int, book: dict, db: Session = Depends(get_db)):
+    for i, b in enumerate(books):
+        if b['id'] == book_id:
+            books[i] = book
+            books[i]['id'] = book_id
+            return book
+        
+    response.status_code = 404
     return {
-        "message": "Student infomation is deleted"
+        'message': 'Book not found'
     }
+
+@router_v1.delete('/books/{book_id}')
+async def delete_book(book_id: int, db: Session = Depends(get_db)):
+    pass
 
 app.include_router(router_v1)
 
